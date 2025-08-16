@@ -1,6 +1,5 @@
 all: run
 	
-
 run:
 	go run .
 
@@ -10,4 +9,7 @@ build:
 clean:
 	rm main
 
-.PHONY: all run build clean
+kafka:
+	docker compose up
+
+.PHONY: all run build clean kafka

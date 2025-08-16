@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"container/list"
+	"sync"
+	"time"
+)
 
 type Order struct {
 	OrderUID          string    `json:"order_uid"`
@@ -68,4 +72,16 @@ type OrderResponse struct {
 	SmID              int       `json:"sm_id"`
 	DateCreated       time.Time `json:"date_created"`
 	OofShard          string    `json:"oof_shard"`
+}
+
+type LRUCache struct {
+	capacity int
+	cache    map[string]*list.Element
+	list     *list.List
+	mutex    sync.RWMutex
+}
+
+type CacheItem struct {
+	key   string
+	value OrderResponse
 }

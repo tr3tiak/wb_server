@@ -8,16 +8,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	host_db     = "localhost"
-	port_db     = 5432
-	user_db     = "orders_user"
-	password_db = "1"
-	dbname_db   = "orders_db"
-)
-
-var db *sql.DB
-
 func connectToDB() (*sql.DB, error) {
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host_db, port_db, user_db, password_db, dbname_db)
 	db, err := sql.Open("postgres", connStr)

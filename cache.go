@@ -3,20 +3,7 @@ package main
 import (
 	"container/list"
 	"log"
-	"sync"
 )
-
-type LRUCache struct {
-	capacity int
-	cache    map[string]*list.Element
-	list     *list.List
-	mutex    sync.RWMutex
-}
-
-type CacheItem struct {
-	key   string
-	value OrderResponse
-}
 
 func NewLRUCache(capacity int) *LRUCache {
 	return &LRUCache{

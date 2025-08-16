@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	GlobalCache = NewLRUCache(GlobalConfig.CacheSize)
+	GlobalCache = NewLRUCache(cache_size)
 
 	var err error
 	db, err = connectToDB()
