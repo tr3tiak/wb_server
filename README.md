@@ -13,7 +13,7 @@
 ```
 pr1/
 ├── main.go              # Точка входа приложения
-├── models.go            # Модели данных (Order, Delivery, Payment, Item)
+├── models.go            # Модели данных
 ├── handlers.go          # HTTP обработчики
 ├── database.go          # Работа с базой данных
 ├── cache.go             # LRU кэш
