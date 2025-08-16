@@ -1,0 +1,1 @@
+cat model.json | jq -c '.' | kcat -P -b localhost:9092 -t orders-topic
