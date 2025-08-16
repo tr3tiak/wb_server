@@ -48,7 +48,7 @@ func consumeKafka() {
 		panic(fmt.Sprintf("не удалось подписаться: %v", err))
 	}
 
-	fmt.Println("потребитель kafka инициализирован")
+	fmt.Println("консьюмер kafka инициализирован")
 
 	for {
 		msg, err := consumer.ReadMessage(-1)
