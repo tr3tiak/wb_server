@@ -22,6 +22,11 @@ func main() {
 
 	go consumeKafka()
 	http.HandleFunc("/order", orderHandler)
+
+	// Обслуживание статических файлов
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/", fs)
+
 	fmt.Println("сервер запущен на порту :8080")
 	http.ListenAndServe(":8080", nil)
 }

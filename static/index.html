@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сервис заказов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        .search-button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .search-button:hover {
+            background: #0056b3;
+        }
+
+        .search-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .order-details {
+            display: none;
+        }
+
+        .order-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .order-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .order-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .order-field {
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #555;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .field-value {
+            color: #333;
+        }
+
+        .items-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+
+        .item-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .item-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .search-input {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .order-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Сервис заказов</h1>
+
+        <div class="search-form">
+            <form id="searchForm">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="orderId" 
+                    placeholder="Введите ID заказа"
+                    required
+                >
+                <button type="submit" class="search-button" id="searchButton">
+                    Найти заказ
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <p>Загружаем информацию о заказе...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+        </div>
+
+        <div class="order-details" id="orderDetails">
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+        
+        const searchForm = document.getElementById('searchForm');
+        const orderIdInput = document.getElementById('orderId');
+        const searchButton = document.getElementById('searchButton');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const orderDetails = document.getElementById('orderDetails');
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const orderId = orderIdInput.value.trim();
+            if (!orderId) {
+                showError('Пожалуйста, введите ID заказа');
+                return;
+            }
+
+            await searchOrder(orderId);
+        });
+
+        async function searchOrder(orderId) {
+            setLoading(true);
+            hideError();
+            hideOrderDetails();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/order?id=${encodeURIComponent(orderId)}`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Заказ не найден');
+                    } else {
+                        throw new Error(`Ошибка сервера: ${response.status}`);
+                    }
+                }
+
+                const order = await response.json();
+                displayOrder(order);
+                
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function displayOrder(order) {
+            const html = `
+                <div class="order-section">
+                    <h3>Основная информация</h3>
+                    <div class="order-grid">
+                        <div class="order-field">
+                            <div class="field-label">ID заказа</div>
+                            <div class="field-value">${order.order_uid || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Трек номер</div>
+                            <div class="field-value">${order.track_number || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Дата создания</div>
+                            <div class="field-value">${formatDate(order.date_created)}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">ID клиента</div>
+                            <div class="field-value">${order.customer_id || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Сервис доставки</div>
+                            <div class="field-value">${order.delivery_service || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Локаль</div>
+                            <div class="field-value">${order.locale || 'Не указана'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-section">
+                    <h3>Информация о доставке</h3>
+                    <div class="order-grid">
+                        <div class="order-field">
+                            <div class="field-label">Имя получателя</div>
+                            <div class="field-value">${order.delivery?.name || 'Не указано'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Телефон</div>
+                            <div class="field-value">${order.delivery?.phone || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Email</div>
+                            <div class="field-value">${order.delivery?.email || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Город</div>
+                            <div class="field-value">${order.delivery?.city || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Адрес</div>
+                            <div class="field-value">${order.delivery?.address || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Индекс</div>
+                            <div class="field-value">${order.delivery?.zip || 'Не указан'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-section">
+                    <h3>Информация об оплате</h3>
+                    <div class="order-grid">
+                        <div class="order-field">
+                            <div class="field-label">Транзакция</div>
+                            <div class="field-value">${order.payment?.transaction || 'Не указана'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Провайдер</div>
+                            <div class="field-value">${order.payment?.provider || 'Не указан'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Сумма</div>
+                            <div class="field-value">${formatCurrency(order.payment?.amount)}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Валюта</div>
+                            <div class="field-value">${order.payment?.currency || 'Не указана'}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Стоимость доставки</div>
+                            <div class="field-value">${formatCurrency(order.payment?.delivery_cost)}</div>
+                        </div>
+                        <div class="order-field">
+                            <div class="field-label">Банк</div>
+                            <div class="field-value">${order.payment?.bank || 'Не указан'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${order.items && order.items.length > 0 ? `
+                <div class="order-section">
+                    <h3>Товары (${order.items.length})</h3>
+                    <ul class="items-list">
+                        ${order.items.map(item => `
+                            <li class="item">
+                                <div class="item-header">${item.name || 'Без названия'}</div>
+                                <div class="item-details">
+                                    <div class="order-field">
+                                        <div class="field-label">Цена</div>
+                                        <div class="field-value">${formatCurrency(item.price)}</div>
+                                    </div>
+                                    <div class="order-field">
+                                        <div class="field-label">Общая стоимость</div>
+                                        <div class="field-value">${formatCurrency(item.total_price)}</div>
+                                    </div>
+                                    <div class="order-field">
+                                        <div class="field-label">Бренд</div>
+                                        <div class="field-value">${item.brand || 'Не указан'}</div>
+                                    </div>
+                                    <div class="order-field">
+                                        <div class="field-label">Размер</div>
+                                        <div class="field-value">${item.size || 'Не указан'}</div>
+                                    </div>
+                                    <div class="order-field">
+                                        <div class="field-label">Скидка</div>
+                                        <div class="field-value">${item.sale || 0}%</div>
+                                    </div>
+                                    <div class="order-field">
+                                        <div class="field-label">Статус</div>
+                                        <div class="field-value">${item.status || 'Не указан'}</div>
+                                    </div>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+            `;
+
+            orderDetails.innerHTML = html;
+            orderDetails.style.display = 'block';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Не указана';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('ru-RU');
+            } catch {
+                return dateString;
+            }
+        }
+
+        function formatCurrency(amount) {
+            if (amount === null || amount === undefined) return 'Не указана';
+            return new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB'
+            }).format(amount / 100);
+        }
+
+        function setLoading(isLoading) {
+            loading.style.display = isLoading ? 'block' : 'none';
+            searchButton.disabled = isLoading;
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        function hideError() {
+            error.style.display = 'none';
+        }
+
+        function hideOrderDetails() {
+            orderDetails.style.display = 'none';
+        }
+
+        orderIdInput.focus();
+    </script>
+</body>
+</html> 
