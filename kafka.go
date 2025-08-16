@@ -31,11 +31,11 @@ func handleMessageKafka(message string) {
 
 func consumeKafka() {
 	config := &kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
-		"group.id":          "orders-group",
-		"auto.offset.reset": "earliest",
-		"fetch.min.bytes":   1,
-		"fetch.wait.max.ms": 500,
+		"bootstrap.servers": kafka_bootstrap_servers,
+		"group.id":          kafka_group_id,
+		"auto.offset.reset": kafka_auto_offset_reset,
+		"fetch.min.bytes":   kafka_fetch_min_bytes,
+		"fetch.wait.max.ms": kafka_fetch_wait_max_ms,
 	}
 
 	consumer, err := kafka.NewConsumer(config)
@@ -43,7 +43,7 @@ func consumeKafka() {
 		panic(fmt.Sprintf("не удалось создать потребителя: %v", err))
 	}
 
-	err = consumer.SubscribeTopics([]string{"orders-topic"}, nil)
+	err = consumer.SubscribeTopics([]string{kafka_topic}, nil)
 	if err != nil {
 		panic(fmt.Sprintf("не удалось подписаться: %v", err))
 	}
