@@ -20,6 +20,8 @@ pr1/
 ├── kafka.go             # Работа с Kafka
 ├── globals.go           # Глобальные переменные
 ├── docker-compose.yaml  # Конфигурация Docker
+├── static/              # Веб-интерфейс
+│   └── index.html       # Главная страница
 ├── database/            # SQL скрипты
 │   ├── init/
 │   │   └── init.sql
